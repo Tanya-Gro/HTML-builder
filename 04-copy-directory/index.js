@@ -10,7 +10,7 @@ function copyDir(from, into) {
     fs.stat(copyFolder, (err) => { 
       if (err) {
         // console.error('f', err.code, copyFolder);
-        // попки анзначения нет. создаем ее.
+        // папки нет. создаем ее.
         fs.mkdir(copyFolder, (err) => {
           if (err) {
             return console.error(err);

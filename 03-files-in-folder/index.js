@@ -18,7 +18,13 @@ function getFilesInformation(err, files) {
       if (err) {
         console.error(err);
       } else {
-        console.log(`${file.name.split('.')[0]} - ${file.name.split('.')[1]} - ${Math.floor(stats.size/1.024)/1000}kb`);
+        console.log(`${
+          path.basename(
+            file.name, 
+            path.extname(file.name)
+          )} - ${path.extname(file.name)} - ${
+            Math.floor(stats.size/1.024)/1000}kb`
+          );
       }
     });
   });
