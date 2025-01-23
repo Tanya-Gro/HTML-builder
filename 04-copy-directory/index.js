@@ -1,62 +1,45 @@
-const fs = require('fs');
+const fs = require('fs/promises');
 const path = require('path');
 
-function copyDir(from, into) {
-  const originFolder = path.join(__dirname, from);
-  const copyFolder = path.join(__dirname, into);
+const originFolder = path.join(__dirname, 'files');
+const copyFolder = path.join(__dirname, 'files-copy');
 
+(async () => {
   try {
-    // проверяем есть ли папка назначения
-    fs.stat(copyFolder, (err) => { 
-      if (err) {
-        // console.error('f', err.code, copyFolder);
-        // папки нет. создаем ее.
-        fs.mkdir(copyFolder, (err) => {
-          if (err) {
-            return console.error(err);
-          }
-          //console.log('Directory created successfully!');
-        }); 
+    // Проверяем существование папки назначения
+    try {
+      await fs.stat(copyFolder); // Проверяем, существует ли папка
+      const files = await fs.readdir(copyFolder); // Считываем файлы
+      // Очищаем папку, удаляя все файлы внутри
+      await Promise.all(
+        files.map((file) =>
+          fs.rm(path.join(copyFolder, file), { recursive: true, force: true })
+        )
+      );
+    } catch (err) {
+      // Если папки нет, создаем ее
+      if (err.code === 'ENOENT') {
+        await fs.mkdir(copyFolder, { recursive: true });
       } else {
-        // папка назначения есть. очищаем ее.
-        clearFolder(into);
+        throw err; // Перебрасываем ошибку, если это что-то другое
       }
-    });
-    //копируем
-    const files = fs.readdir(originFolder, (err, files) => {
-      if (err) {
-        console.error(err);
-        return;
-      } else if (files) {
-        files.forEach((file) => {
-          //console.log(`${originFolder}\\${file}`, `${copyFolder}\\${file}`);
-          fs.copyFile(`${originFolder}\\${file}`, `${copyFolder}\\${file}`, (err)=> {if (err) console.error('Error copping')});
-        });
-      }});
+    }
 
-    console.log('coping completed');
+    // Читаем файлы из исходной папки
+    const filesToCopy = await fs.readdir(originFolder);
+
+    // Копируем каждый файл в папку назначения
+    await Promise.all(
+      filesToCopy.map((file) =>
+        fs.copyFile(
+          path.join(originFolder, file),
+          path.join(copyFolder, file)
+        )
+      )
+    );
+
+    console.log('Files was copyed succesfully!');
   } catch (err) {
-    console.error('copyDir can`t copy files');
+    console.error('Files caudn`t be copyed:', err);
   }
-}
-
-function clearFolder(into) {
-  //читаем папку
-  const folderToClear = path.join(__dirname, into);
-  // console.log('удаляем содержимое папки', folderToClear);
-  fs.readdir(folderToClear, (err, files) => {
-    if (err) {
-      console.error(err);
-      return;
-    } else if (files) {
-      // очищаем папку
-      files.forEach((file) => {
-        // console.log(folderToClear + file);
-        fs.unlink(`${folderToClear}\\${file}`, (err) => {
-          if (err) console.error('fs.unlink:', err);
-        });
-      })
-  }});
-}
-
-copyDir('files', 'files-copy');
+})();
